@@ -54,7 +54,7 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
-call :log "Admin check passed"
+call :log "YGG conseguiu se elevar a nível de administrador com sucesso"
     
 ::   ===================================================
 
@@ -146,13 +146,15 @@ for /L %%i in (1,1,%SECS%) do (
 ::    
 ::   ...................................................
 
-:mainmenu 
-cls 
+:mainmenu
+cls
+
 echo ===================================================
 echo.
 echo           Níðhöggr v2 — Menu (Modo: %MODE%) 
 echo.
 echo ..................................................
+echo.
 echo 01. Otimizações gerais do sistema.
 echo 02. Otimizações de energia.
 echo 03. Ajustes de mouse e teclado.
@@ -201,8 +203,20 @@ echo ===================================================
 :create_restore
 cls
 echo YGG está criando um checkpoint... 
-Powershell -NoProfile -Command "Checkpoint-Computer -Description 'YGG checkpoint' -RestorePointType 'MODIFY_SETTINGS'" >nul 2>&1 
-echo YGG conseguiu criar o checkpoint com sucesso.
+Powershell -NoProfile -Command "Get-ComputerRestorePoint" >nul 2>&1
+if %errorlevel% neq 0 (
+        echo [!] Verifique se a proteção do sistema está habilitado na unidade C: antes.
+        call :log "YGG não conseguiu criar o checkpoint: Get-ComputerRestorePoint returned %errorlevel%
+else (
+        powershell -NoProfile -Command "Checkpoint-Computer -description 'YGG checkpoint' -RestorePointType 'MODIFY_SETTINGS'" >nul 2>&1
+        if %errorlevel% equ 0 (
+                ehco YGG conseguiu criar o checkpoint com sucesso.
+                call :log "O checkpoint foi criado."
+        ) else (
+                echo [!] YGG não conseguiu criar o checkpoint.
+                call :log "O checkpoint não foi criado: %errorlevel%"
+        )
+)
 pause >nul
 goto mainmenu
 
@@ -216,11 +230,9 @@ goto mainmenu
 :resources 
 cls 
 echo YGG está baixando alguns pacotinhos para o %YGG_DIR%... 
-curl -g -k -L -# -o "%temp%\Níðhöggr.zip" "https://github.com/YGG-dr/NIDHOGG_tweak.YGG/blob/main/NIDHOGG_tweak.YGG/N%C3%AD%C3%B0h%C3%B6ggr.zip" >nul 2>&1 
-if exist "%temp%\ygg.zip" Powershell -NoProfile -Command "Expand-Archive -LiteralPath '%temp%\ygg.zip' -DestinationPath '%YGG_DIR%' -Force" >nul 2>&1 
-echo YGG conseguiu baixar os recursos com sucesso. 
-pause >nul
-goto mainmenu
+call :progress "YGG está carregando os pacotinhos." 3
+set "RESOURCE_URL=https://github.com/YGG-dr/NIDHOGG_tweak.YGG/blob/main/NIDHOGG_tweak.YGG/N%C3%AD%C3%B0h%C3%B6ggr.zip"
+if exist "%temp%"\Níðhöggr.zip" del "%temp%"
 
 ::   ===================================================
         
