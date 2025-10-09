@@ -24,7 +24,7 @@ set "MODE=SAFE"  :: Padrão é o modo seguro.
 if not exist "%YGG_DIR%"    mkdir "%YGG_DIR%"    2>nul 
 if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%" 2>nul
 
-::   ===================================================
+::   =================================================== 
 
 ::   ===================================================
 ::    
@@ -70,7 +70,7 @@ set "TAG=%~2"
 if "%REG_KEY%"=="" goto :eof 
 :: Gera timestamp seguro para filename.
 for /f "tokens=1-3 delims=/ " %%a in ("%date%") do set d1=%%c-%%b-%%a
-for /f "tokens=1-3 delims=:." %%a in (%%time%%)
+for /f "tokens=1-3 delims=:." %%a in (%%time%%) do set d2=%%c-%%b-%%a
     
 set "TS=%date:~10,4%-%date:~4,2%-%date:~7,2%%time:~0,2%-%time:~3,2%-%time:~6,2%" 
 set "SAFEFILE=%BACKUP_DIR%\\%~2_%TS%.reg" 
@@ -216,7 +216,7 @@ goto mainmenu
 :resources 
 cls 
 echo YGG está baixando alguns pacotinhos para o %YGG_DIR%... 
-curl -g -k -L -# -o "%temp%\ygg.zip" "" >nul 2>&1 
+curl -g -k -L -# -o "%temp%\Níðhöggr.zip" "https://github.com/YGG-dr/NIDHOGG_tweak.YGG/blob/main/NIDHOGG_tweak.YGG/N%C3%AD%C3%B0h%C3%B6ggr.zip" >nul 2>&1 
 if exist "%temp%\ygg.zip" Powershell -NoProfile -Command "Expand-Archive -LiteralPath '%temp%\ygg.zip' -DestinationPath '%YGG_DIR%' -Force" >nul 2>&1 
 echo YGG conseguiu baixar os recursos com sucesso. 
 pause >nul
