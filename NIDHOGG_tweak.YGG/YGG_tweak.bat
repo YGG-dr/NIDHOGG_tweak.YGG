@@ -229,11 +229,14 @@ goto mainmenu
 ::   ...................................................
 :resources 
 cls 
-echo YGG está baixando alguns pacotinhos para o %YGG_DIR%... 
+echo YGG está baixando alguns pacotinhos para o %YGG_DIR%...
+
 call :progress "YGG está carregando os pacotinhos." 3
 set "RESOURCE_URL=https://github.com/YGG-dr/NIDHOGG_tweak.YGG/blob/main/NIDHOGG_tweak.YGG/N%C3%AD%C3%B0h%C3%B6ggr.zip"
+
 if exist "%temp%\Níðhöggr.zip" del "%temp%\Níðhöggr.zip" >nul 2>%1
 curl -g -k -l -# -o "%temp%\Níðhöggr.zip" "%RESOURCE_URL%" >nul 2>&1
+
 if exist "%temp%\Níðhöggr.zip" (
         PowerShell -NoProfile -Command "Expand-Archive -LiteralPath '%temp%\Níðhöggr.zip' -DestinationPath '%YGG_DIR%' -Force" >nul 2>&1
         echo YGG baixou os pacotinhos para %YGG_DIR% com sucesso.
@@ -254,12 +257,17 @@ if exist "%temp%\Níðhöggr.zip" (
 cls 
 echo YGG está fazendo as otimizações gerais da máquina... 
 reg add "HKCU\Control Panel\Desktop\WindowMetrics" /v "MinAnimate" /t REG_SZ /d 0 /f >nul 2>&1 
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v "VisualFXSetting" /t REG_DWORD /d 2 /f >nul 2>&1 
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v "VisualFXSetting" /t REG_DWORD /d 2 /f >nul 2>&1
+
 if /i "%MODE%"=="EXTREME" ( 
+        call :log "EXTREME: mostrando WSearch."
         sc config "WSearch" start= disabled >nul 2>&1 
         sc stop "WSearch" >nul 2>&1 
 )
+
+call :progress "YGG está aplicando alguns ajustes." 2
 echo YGG terminou de fazer as configurações gerais da máquina.
+call :log "Otimizações gerais concluidas."
 pause >nul
 goto mainmenu
 
@@ -273,10 +281,13 @@ goto mainmenu
         
 :opt_power
 cls
-echo YGG está alterando seu plano de energia... 
+echo YGG está alterando seu plano de energia...
+call :log "A aplicação do plano de energia foi iniciado."
+
 powercfg -duplicatescheme SCHEME_MIN >nul 2>&1 
 powercfg -change -standby-timeout-ac 0 >nul 2>&1 
-powercfg -change -hibernate-timeout-ac 0 >nul 2>&1 
+powercfg -change -hibernate-timeout-ac 0 >nul 2>&1
+call :progress "YGG está configuarando o plano de energia..." 2
 echo YGG alterou seu plano de energia com sucesso. 
 pause >nul
 goto mainmenu
@@ -292,8 +303,12 @@ goto mainmenu
 :opt_input 
 cls 
 echo YGG está ajustando as configurações do seu mouse e teclado...
-reg add "HKCU\Control Panel\Mouse" /v "MouseSensitivity" /t REG_SZ /d 10 /f >nul 2>&1 
+call :log "Otimizando dispositivos de entrada."
+
+reg add "HKCU\Control Panel\Mouse" /v "MouseSensitivity" /t REG_SZ /d 10 /f >nul 2>&1
+
 echo YGG ajustou as configurações do seu mouse e teclado com sucesso.
+call :log "A otimização foi feita com sucesso."
 pause >nul
 goto mainmenu
 
@@ -308,7 +323,8 @@ goto mainmenu
 :opt_gpu
 cls
 echo YGG está otimizando sua GPU... 
-echo Se o NVP estiver presente, use-o manualmente em %YGG_DIR%. 
+call :log "A otimização da GPU está sendo feita."
+echo Se o NVP estiver presente em %YGG_DIR% use-o para perfis de jogo. 
 pause >nul
 goto mainmenu
 
@@ -323,12 +339,21 @@ goto mainmenu
 :opt_cpu
 cls
 echo YGG está otimizando a CPU da máquina... 
-if /i "%MODE%"=="EXTREME" ( 
-        echo [!] YGG está desativando o core parking da CPU...
+call :log "A otimização da CPU foi iniciada."
+
+call :setBackup "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings" "cpu_powersettings"
+
+if /i "%MODE%"=="EXTREME" (
+        call :log "[ !- EXTREME MODE -! ] Iniciando a desativação do core parking."
+        echo [ !- EXTREME MODE -! ] YGG está desativando o core parking da CPU...
+
 ) else ( 
         powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMIN 5 >nul 2>&1 
         powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMAX 100 >nul 2>&1 
-        powercfg -S SCHEME_CURRENT >nul 2>&1 ) 
+        powercfg -S SCHEME_CURRENT >nul 2>&1
+)
+
+call :log "A otimização da CPU foi concluida com sucesso."
 echo YGG otimizou a CPU com sucesso.
 pause >nul
 goto mainmenu
@@ -344,9 +369,18 @@ goto mainmenu
 :opt_storage
 cls
 echo YGG está limpando os arquivos temporários da máquina...
+call :log "A limpeza do armazenamento foi iniciado."
+
 rd /s /q "%temp%" >nul 2>&1 || del /s /q "%temp%*" >nul 2>&1
 rd /s /q "C:\Windows\Temp" >nul 2>&1 || del /s /q "C:\Windows\Temp*" >nul 2>&1
-if /i "%MODE%"=="EXTREME" Powershell -NoProfile -Command "Start-Process -FilePath dism.exe -ArgumentList '/online','/Cleanup-Image','/StartComponentCleanup','/ResetBase' -Wait -NoNewWindow" >nul 2>&1
+
+if /i "%MODE%"=="EXTREME" (
+        call :log "[ !- EXTREME MODE -! ] Iniciando limpeza do DISM."
+        Powershell -NoProfile -Command "Start-Process -FilePath dism.exe -ArgumentList '/online','/Cleanup-Image','/StartComponentCleanup','/ResetBase' -Wait -NoNewWindow" >nul 2>&1
+)
+
+call :progress "Limpando arquivos inúteis do armazenamento" 3
+echo YGG está limpando arquivos inúteis do armazenamento
 echo YGG limpou os arquivos temporários com sucesso. 
 pause >nul 
 goto mainmenu
