@@ -227,23 +227,26 @@ goto mainmenu
 ::                    DOWNLOAD DE RECURSOS  
 ::
 ::   ...................................................
-:resources 
-cls 
-echo YGG está baixando alguns pacotinhos para o %YGG_DIR%...
 
+:resources 
+cls
+
+echo YGG está baixando alguns pacotinhos para o %YGG_DIR%...
 call :progress "YGG está carregando os pacotinhos." 3
 set "RESOURCE_URL=https://github.com/YGG-dr/NIDHOGG_tweak.YGG/blob/main/NIDHOGG_tweak.YGG/N%C3%AD%C3%B0h%C3%B6ggr.zip"
-
 if exist "%temp%\Níðhöggr.zip" del "%temp%\Níðhöggr.zip" >nul 2>%1
 curl -g -k -l -# -o "%temp%\Níðhöggr.zip" "%RESOURCE_URL%" >nul 2>&1
-
 if exist "%temp%\Níðhöggr.zip" (
         PowerShell -NoProfile -Command "Expand-Archive -LiteralPath '%temp%\Níðhöggr.zip' -DestinationPath '%YGG_DIR%' -Force" >nul 2>&1
         echo YGG baixou os pacotinhos para %YGG_DIR% com sucesso.
         call :log "YGG baixou os pacotinhos para %YGG_DIR%"
 ) else (
-        
+        echo YGG falhou em baixar os pacotinhos para %YGG_DIR%.
+        call :log "Falha ao baixar os arquivos"
 )
+
+pause >nul
+goto mainmenu
 
 ::   ===================================================
         
@@ -255,7 +258,9 @@ if exist "%temp%\Níðhöggr.zip" (
         
 :opt_general
 cls 
-echo YGG está fazendo as otimizações gerais da máquina... 
+echo YGG está fazendo as otimizações gerais da máquina.
+call :log "Iniciando otimizações gerais."
+
 reg add "HKCU\Control Panel\Desktop\WindowMetrics" /v "MinAnimate" /t REG_SZ /d 0 /f >nul 2>&1 
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v "VisualFXSetting" /t REG_DWORD /d 2 /f >nul 2>&1
 
@@ -287,6 +292,7 @@ call :log "A aplicação do plano de energia foi iniciado."
 powercfg -duplicatescheme SCHEME_MIN >nul 2>&1 
 powercfg -change -standby-timeout-ac 0 >nul 2>&1 
 powercfg -change -hibernate-timeout-ac 0 >nul 2>&1
+
 call :progress "YGG está configuarando o plano de energia..." 2
 echo YGG alterou seu plano de energia com sucesso. 
 pause >nul
@@ -346,7 +352,6 @@ call :setBackup "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings" "cpu
 if /i "%MODE%"=="EXTREME" (
         call :log "[ !- EXTREME MODE -! ] Iniciando a desativação do core parking."
         echo [ !- EXTREME MODE -! ] YGG está desativando o core parking da CPU...
-
 ) else ( 
         powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMIN 5 >nul 2>&1 
         powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMAX 100 >nul 2>&1 
@@ -368,7 +373,7 @@ goto mainmenu
         
 :opt_storage
 cls
-echo YGG está limpando os arquivos temporários da máquina...
+echo YGG está limpando os arquivos temporários do armazenamento...
 call :log "A limpeza do armazenamento foi iniciado."
 
 rd /s /q "%temp%" >nul 2>&1 || del /s /q "%temp%*" >nul 2>&1
@@ -379,8 +384,7 @@ if /i "%MODE%"=="EXTREME" (
         Powershell -NoProfile -Command "Start-Process -FilePath dism.exe -ArgumentList '/online','/Cleanup-Image','/StartComponentCleanup','/ResetBase' -Wait -NoNewWindow" >nul 2>&1
 )
 
-call :progress "Limpando arquivos inúteis do armazenamento" 3
-echo YGG está limpando arquivos inúteis do armazenamento
+call :progress "YGG está limpando arquivos inúteis do armazenamento" 3
 echo YGG limpou os arquivos temporários com sucesso. 
 pause >nul 
 goto mainmenu
@@ -394,15 +398,29 @@ goto mainmenu
 :opt_debloat
 cls
 echo YGG fará a remoção de aplicativos desnecessários:
-echo 1) Remoção segura (SAFE)
-echo 2) Remoção completa (EXTREME)
-echo M) Voltar
+echo 1) Remoção segura.         [ °- SAFE MODE -° ] 
+echo 2) Remoção completa.       [ !- EXTREME MODE -! ]
+echo M) Voltar.                 
 echo.
-set /p "DCH=Escolha: "
-if /i "%DCH%"=="M" goto mainmenu 
-if /i "%DCH%"=="1" Powershell -Command "Get-AppxPackage -AllUsers 3D | Remove-AppxPackage" >nul 2>&1 
-if /i "%DCH%"=="2" Powershell -Command "Get-AppxPackage -AllUsers Microsoft.Xbox | Remove-AppxPackage" >nul 2>&1 
-echo YGG conseguiu remover o bloatware com sucesso.
+set /p "DCH=> "
+
+if /i "%DCH%"=="M" goto mainmenu
+
+if /i "%DCH%"=="1" (
+        call :log "Remoção de debloats seguros."
+        call :psrun "Get-AppxPackage -AllUsers *3D* | Remove-AppxPackage"
+        call :psrun "Get-AppxPackage -AllUsers *Microsoft.XboxGamingOverlay* | Remove-AppxPackage"
+        echo :log "A remoção de debloats no modo seguro foi concluido."
+) else if /i "%DCH%"=="2" (
+        echo [!] YGG está fazendo backup antes de remover os apps.
+        call :psrun "Get-AppxPackage -AllUsers | Export-CliXml -Path '%YGG_DIR%\allusers_appx.xml'"
+        call :log "O backup do debloat foi exportado."
+        call :psrun "Get-AppxPackage -AllUsers *Microsoft.Xbox* | Remove-AppxPackage"
+        call :psrun "Get-AppxPackage -AllUsers *Microsoft.549981C3F5F10* | Remove-AppxPackage"
+        echo YGG removeu com sucesso os debloats do sistema.
+        call :log "Remoção dos debloats foi concluido com sucesso."
+)
+
 pause >nul
 goto mainmenu
 
@@ -416,10 +434,19 @@ goto mainmenu
         
 :opt_network
 cls
-echo YGG está aplicando otimizações de rede...
+echo YGG está aplicando otimizações de rede.
+call :log "Iniciando otimização da rede."
+
+call :setBackup
+"HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "tcpip_params"
+
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v MaxUserPort /t REG_DWORD /d 65534 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v TcpTimedWaitDelay /t REG_DWORD /d 30 /f >nul 2>&1
-echo YGG otimizou a rede com sucesso.
+
+if /i %MODE%=="EXTREME" (
+        echo 
+)
+
 pause >nul
 goto mainmenu
 

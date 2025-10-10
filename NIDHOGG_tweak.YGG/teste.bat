@@ -306,18 +306,13 @@ set /p "DCH=Escolha: "
 if /i "%DCH%"=="M" goto mainmenu
 
 if /i "%DCH%"=="1" (
-    call :log "Debloat SAFE started"
-    call :psrun "Get-AppxPackage -AllUsers *3D* | Remove-AppxPackage"
-    call :psrun "Get-AppxPackage -AllUsers *Microsoft.XboxGamingOverlay* | Remove-AppxPackage"
-    echo Remoção (SAFE) concluída.
+
     call :log "Debloat SAFE finished"
+
 ) else if /i "%DCH%"=="2" (
-    echo [!] Modo EXTREME selecionado. Fazendo backup antes de remover muitos Appx.
-    call :psrun "Get-AppxPackage -AllUsers | Export-CliXml -Path '%YGG_DIR%\allusers_appx.xml'"
-    call :log "Debloat EXTREME backup exported"
-    :: Exemplos de remoção agressiva (cuidado)
-    call :psrun "Get-AppxPackage -AllUsers *Microsoft.Xbox* | Remove-AppxPackage"
-    call :psrun "Get-AppxPackage -AllUsers *Microsoft.549981C3F5F10* | Remove-AppxPackage"
+
+    
+    
     echo Remoção (EXTREME) concluída.
     call :log "Debloat EXTREME finished"
 ) else (
@@ -335,11 +330,9 @@ echo YGG aplicando otimizações de rede...
 call :log "Network tweaks started"
 
 :: Backup chave tcpip
-call :setBackup "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "tcpip_params"
-
+call :setBackup 
 :: Ajustes conservadores
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v MaxUserPort /t REG_DWORD /d 65534 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v TcpTimedWaitDelay /t REG_DWORD /d 30 /f >nul 2>&1
+
 
 if /i "%MODE%"=="EXTREME" (
     echo [!] EXTREME: IPv6 pode ser desativado - operação perigosa.
