@@ -232,7 +232,15 @@ cls
 echo YGG está baixando alguns pacotinhos para o %YGG_DIR%... 
 call :progress "YGG está carregando os pacotinhos." 3
 set "RESOURCE_URL=https://github.com/YGG-dr/NIDHOGG_tweak.YGG/blob/main/NIDHOGG_tweak.YGG/N%C3%AD%C3%B0h%C3%B6ggr.zip"
-if exist "%temp%"\Níðhöggr.zip" del "%temp%"
+if exist "%temp%\Níðhöggr.zip" del "%temp%\Níðhöggr.zip" >nul 2>%1
+curl -g -k -l -# -o "%temp%\Níðhöggr.zip" "%RESOURCE_URL%" >nul 2>&1
+if exist "%temp%\Níðhöggr.zip" (
+        PowerShell -NoProfile -Command "Expand-Archive -LiteralPath '%temp%\Níðhöggr.zip' -DestinationPath '%YGG_DIR%' -Force" >nul 2>&1
+        echo YGG baixou os pacotinhos para %YGG_DIR% com sucesso.
+        call :log "YGG baixou os pacotinhos para %YGG_DIR%"
+) else (
+        
+)
 
 ::   ===================================================
         
