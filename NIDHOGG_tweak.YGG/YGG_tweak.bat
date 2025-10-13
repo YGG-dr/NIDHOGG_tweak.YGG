@@ -1,40 +1,41 @@
-@echo off 
+@echo off
 @REM
+:: YGG sabe que echo off remove os REM, mas o YGG é fresco... UwU
+
 REM ::==================================================::
 REM ::                                                  ::
-REM ::       --- Níðhöggr v2 • Made by ¥ऊ€_แㄨΘ ---     ::
+REM ::         --- Níðhöggr v2 • Made by YGG ---        ::
 REM ::                                                  ::
 REM ::==================================================:: 
 
 ::   ===================================================
 ::    
-::                  CONFIGURAÇÕES GLOBAIS
+::                   CONFIGURAÇÕES GLOBAIS
 ::
 ::   ...................................................
 
-setlocal EnableDelayedExpansion 
+setlocal EnableDelayedExpansion
 title Níðhöggr v2 — Made by YGG
 color 0d
 
-set "YGG_DIR=C:\ygg" 
-set "LOG_FILE=%YGG_DIR%\ygg_log.txt" 
-set "BACKUP_DIR=%YGG_DIR%\backup" 
-set "MODE=SAFE"  :: Padrão é o modo seguro.
+set "YGG_DIR=C:\ygg"
+set "LOG_FILE=%YGG_DIR%\ygg_log.txt"
+set "BACKUP_DIR=%YGG_DIR%\backup"
+set "MODE=EXTREME" :: Com toda certeza o padrão deve ser o modo safe, uhum.
 
-if not exist "%YGG_DIR%"    mkdir "%YGG_DIR%"    2>nul 
+if not exist "%YGG_DIR%"    mkdir "%YGG_DIR%"    2>nul
 if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%" 2>nul
 
 ::   =================================================== 
 
 ::   ===================================================
 ::    
-::                     FUNÇÃO DE LOG 
+::                     FUNÇÃO DE LOG
 ::    
 ::   ...................................................
 
 :log
-:: Log cria um arquivo de log com timestamp.
-:: Relatório de logs.
+:: O log cria um arquivo para as logl com o timestamp.
 echo [%date% %time%] %* >> "%LOG_FILE%"
 goto :eof
         
@@ -67,32 +68,59 @@ call :log "YGG conseguiu se elevar a nível de administrador com sucesso"
 :setBackup 
 set "REG_KEY=%~1"
 set "TAG=%~2"
-if "%REG_KEY%"=="" goto :eof 
-:: Gera timestamp seguro para filename.
-for /f "tokens=1-3 delims=/ " %%a in ("%date%") do set d1=%%c-%%b-%%a
-for /f "tokens=1-3 delims=:." %%a in (%%time%%) do set d2=%%c-%%b-%%a
-    
-set "TS=%date:~10,4%-%date:~4,2%-%date:~7,2%%time:~0,2%-%time:~3,2%-%time:~6,2%" 
-set "SAFEFILE=%BACKUP_DIR%\\%~2_%TS%.reg" 
-reg export "%REG_KEY%" "%SAFEFILE%" /y >nul 2>&1 
-goto :eof
 
-:: %1 = chave do registro, %2 = tag/nome curto.
+if "%REG_KEY%"=="" goto :eof
+if "%TAG%"=="" goto :eof
+
+:: Gera timestamp seguro para o filename.
+for /f "tokens=1-4 delims=/.- " %%a in ("%date%") do set "DATA=%%d-%%b-%%c"
+for /f "tokens=1-3 delims=:." %%a in ("%time%") do set "HORA=%%a-%%b-%%c"
+set "TS=%DATA%_%HORA%"
+
+set "SAFEFILE=%BACKUP_DIR%\\%~2_%TS%.reg"
+
+reg export "%REG_KEY%" "%SAFEFILE%" /y >nul 2>&1
+
+if %errorlevel% equ 0 (
+    call :log "Backup feito com sucesso para %REG_KEY% e %SAFEFILE%."
+) else (
+    call :log "Falha ao criar o backup para %REG_KEYS%Y."
+)
+
+goto :eof
+    
+:: =========================
+:: Função de backup de registro
+:: =========================
+:setBackup
+:: %1 = chave do registro
+:: %2 = tag/nome curto
 set "REG_KEY=%~1"
 set "TAG=%~2"
+
 if "%REG_KEY%"=="" goto :eof
-:: Gera timestamp seguro para filename.
-for /f "tokens=1-3 delims=/ " %%a in ("%date%") do set d1=%%c-%%b-%%a
-for /f "tokens=1-3 delims=:." %%a in ("%time%") do set t1=%%a-%%b-%%c
-set "TS=%d1%_%t1%"
+if "%TAG%"=="" goto :eof
+
+:: --- Gerar timestamp seguro para filenames ---
+for /f "tokens=2-4 delims=/ " %%a in ("%date%") do set "d=%%c-%%b-%%a"
+for /f "tokens=1-3 delims=:." %%a in ("%time%") do set "t=%%a-%%b-%%c"
+set "TS=%d%_%t%"
+
+:: --- Arquivo de backup ---
 set "SAFEFILE=%BACKUP_DIR%\%TAG%_%TS%.reg"
+
+:: --- Exportar registro ---
 reg export "%REG_KEY%" "%SAFEFILE%" /y >nul 2>&1
+
+:: --- Log ---
 if %errorlevel% equ 0 (
     call :log "Backed up %REG_KEY% to %SAFEFILE%"
 ) else (
     call :log "Failed to backup %REG_KEY% (may not exist or access denied)"
 )
+
 goto :eof
+    
 ::   ===================================================
     
 ::   ===================================================
@@ -105,7 +133,7 @@ goto :eof
 :: %1 = comando do PS
 set "PS_CMD=%~1" 
 if  "%PS_CMD%"=="" goto :eof
-call :log "YGG está inicilizando o PowerShell: %PS_CMD%"
+call :log "YGG está inicializando o PowerShell: %PS_CMD%"
 Powershell -NoProfile -ExecutionPolicy Bypass -Command "%PS_CMD%" >nul 2>&1 
 if %errorlevel% neq 0 call :log "YGG não conseguiu inicializar o PowerShell: %PS_CMD%"
 goto :eof
@@ -126,7 +154,7 @@ call :log "YGG está inicializando o Níðhöggr v2 com o modo %MODE%"
     
 ::   ===================================================
 ::
-::                     MENU PRINCIPAL 
+::                  BARRA DE PROGRESSO 
 ::    
 ::   ...................................................
 
@@ -142,7 +170,34 @@ for /L %%i in (1,1,%SECS%) do (
 
 ::   ===================================================
 ::
-::                     MENU PRINCIPAL 
+::                         POPUP
+::
+::   ...................................................
+    
+:popup
+:: %1 = mensagem; %2 = título (opcional)
+set "MB_MSG=%~1"
+set "MB_TITLE=%~2"
+if "%MB_TITLE%"=="" set "MB_TITLE=YGG"
+
+:: Executa PowerShell que mostra MessageBox e usa exit code:
+powershell -NoProfile -Command ^
+  "[Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; " ^
+  "$r = [System.Windows.Forms.MessageBox]::Show('%MB_MSG%','%MB_TITLE%',[System.Windows.Forms.MessageBoxButtons]::YepNão,[System.Windows.Forms.MessageBoxIcon]::Question); " ^
+  "if ($r -eq [System.Windows.Forms.DialogResult]::Yep) { exit 0 } else { exit 1 }"
+
+:: Resultado em %ERRORLEVEL% (0 = Yes, 1 = No)
+if %ERRORLEVEL%==0 (
+    rem Você escolhsu sim
+    goto popup_yes
+) else (
+    rem Você escolheu não
+    goto popup_no
+)
+
+::   ===================================================
+::
+::                     MENU PRINCIPAL
 ::    
 ::   ...................................................
 
@@ -170,7 +225,7 @@ echo.
 echo R. Restaurar 
 echo X. Sair 
 echo. 
-echo
+echo.
 set /p "CHOICE=O que você quer que YGG faça?: "
 echo ===================================================
 
@@ -197,7 +252,7 @@ echo ===================================================
 
 ::   ...................................................
 ::        
-::                     CRIAR CHECKPOINT
+::                 CRIAR CHECKPOINT
 ::        
 ::   ...................................................
 :create_restore
@@ -206,11 +261,11 @@ echo YGG está criando um checkpoint...
 Powershell -NoProfile -Command "Get-ComputerRestorePoint" >nul 2>&1
 if %errorlevel% neq 0 (
         echo [!] Verifique se a proteção do sistema está habilitado na unidade C: antes.
-        call :log "YGG não conseguiu criar o checkpoint: Get-ComputerRestorePoint returned %errorlevel%
+        call :log "YGG não conseguiu criar o checkpoint: Get-ComputerRestorePoint returned %errorlevel%"
 else (
         powershell -NoProfile -Command "Checkpoint-Computer -description 'YGG checkpoint' -RestorePointType 'MODIFY_SETTINGS'" >nul 2>&1
         if %errorlevel% equ 0 (
-                ehco YGG conseguiu criar o checkpoint com sucesso.
+                echo YGG conseguiu criar o checkpoint com sucesso.
                 call :log "O checkpoint foi criado."
         ) else (
                 echo [!] YGG não conseguiu criar o checkpoint.
@@ -224,7 +279,7 @@ goto mainmenu
 
 ::   ===================================================
 ::
-::                    DOWNLOAD DE RECURSOS  
+::                DOWNLOAD DE RECURSOS  
 ::
 ::   ...................................................
 
@@ -234,7 +289,7 @@ cls
 echo YGG está baixando alguns pacotinhos para o %YGG_DIR%...
 call :progress "YGG está carregando os pacotinhos." 3
 set "RESOURCE_URL=https://github.com/YGG-dr/NIDHOGG_tweak.YGG/blob/main/NIDHOGG_tweak.YGG/N%C3%AD%C3%B0h%C3%B6ggr.zip"
-if exist "%temp%\Níðhöggr.zip" del "%temp%\Níðhöggr.zip" >nul 2>%1
+if exist "%temp%\Níðhöggr.zip" del "%temp%\Níðhöggr.zip" >nul 2>&1
 curl -g -k -l -# -o "%temp%\Níðhöggr.zip" "%RESOURCE_URL%" >nul 2>&1
 if exist "%temp%\Níðhöggr.zip" (
         PowerShell -NoProfile -Command "Expand-Archive -LiteralPath '%temp%\Níðhöggr.zip' -DestinationPath '%YGG_DIR%' -Force" >nul 2>&1
@@ -252,7 +307,7 @@ goto mainmenu
         
 ::   ===================================================
 ::
-::                      OTIMIZAÇÕES GERAIS  
+::                   OTIMIZAÇÕES GERAIS  
 ::
 ::   ...................................................
         
@@ -322,29 +377,29 @@ goto mainmenu
 
 ::   ===================================================
 ::
-::                          GPU  
+::                          GPU
 ::
 ::   ...................................................
-        
+
 :opt_gpu
 cls
-echo YGG está otimizando sua GPU... 
+echo YGG está otimizando sua GPU...
 call :log "A otimização da GPU está sendo feita."
-echo Se o NVP estiver presente em %YGG_DIR% use-o para perfis de jogo. 
+echo Se você tiver o NVP na pasta %YGG_DIR%, então você deve usa-lo para perfis de jogo.
 pause >nul
 goto mainmenu
 
 ::   ===================================================
-        
+
 ::   ===================================================
 ::
-::                          CPU  
+::                          CPU
 ::
 ::   ...................................................
 
 :opt_cpu
 cls
-echo YGG está otimizando a CPU da máquina... 
+echo YGG está otimizando a CPU da máquina...
 call :log "A otimização da CPU foi iniciada."
 
 call :setBackup "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings" "cpu_powersettings"
@@ -352,9 +407,9 @@ call :setBackup "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings" "cpu
 if /i "%MODE%"=="EXTREME" (
         call :log "[ !- EXTREME MODE -! ] Iniciando a desativação do core parking."
         echo [ !- EXTREME MODE -! ] YGG está desativando o core parking da CPU...
-) else ( 
-        powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMIN 5 >nul 2>&1 
-        powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMAX 100 >nul 2>&1 
+) else (
+        powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMIN 5 >nul 2>&1
+        powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMAX 100 >nul 2>&1
         powercfg -S SCHEME_CURRENT >nul 2>&1
 )
 
@@ -364,13 +419,13 @@ pause >nul
 goto mainmenu
 
 ::   ===================================================
-        
+
 ::   ===================================================
 ::
 ::                  LIMPEZA E ARMAZENAMENTO
 ::
 ::   ...................................................
-        
+    
 :opt_storage
 cls
 echo YGG está limpando os arquivos temporários do armazenamento...
@@ -385,20 +440,20 @@ if /i "%MODE%"=="EXTREME" (
 )
 
 call :progress "YGG está limpando arquivos inúteis do armazenamento" 3
-echo YGG limpou os arquivos temporários com sucesso. 
-pause >nul 
+echo YGG limpou os arquivos temporários com sucesso.
+pause >nul
 goto mainmenu
 
 ::   ===================================================
-::                     
-::                   REMOÇÃO DE BLOATWARE                      
+::
+::                   REMOÇÃO DE BLOATWARE        
 ::
 ::   ...................................................
-        
+
 :opt_debloat
 cls
 echo YGG fará a remoção de aplicativos desnecessários:
-echo 1) Remoção segura.         [ °- SAFE MODE -° ] 
+echo 1) Remoção segura.         [ °- SAFE MODE -° ]
 echo 2) Remoção completa.       [ !- EXTREME MODE -! ]
 echo M) Voltar.                 
 echo.
@@ -425,28 +480,30 @@ pause >nul
 goto mainmenu
 
 ::   ===================================================
-        
+
 ::   ===================================================
 ::
 ::                          REDE  
 ::
 ::   ...................................................
-        
+  
 :opt_network
 cls
 echo YGG está aplicando otimizações de rede.
 call :log "Iniciando otimização da rede."
 
-call :setBackup
-"HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "tcpip_params"
+call :setBackup "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "tcpip_params"
 
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v MaxUserPort /t REG_DWORD /d 65534 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v TcpTimedWaitDelay /t REG_DWORD /d 30 /f >nul 2>&1
 
 if /i %MODE%=="EXTREME" (
-        echo 
+        echo [ !- EXTREME MODE -! ] YGG pode acabar desativando o IPV6 da sua máquina, isso pode ser perigoso.
+        :: reg add "HKLM\SYSTEM\CurrentControlSet\Services\TCPIP6\Parameters" /v DisabledComponents /t REG_DWORD /d 0xffffffff /f >nul 2>&1
 )
-
+call :progress "YGG está otimizando a sua rede" 3
+echo YGG aplicou as mudanças a sua rede com sucesso.
+call :log "Mudanças na rede complestas com sucesso."
 pause >nul
 goto mainmenu
 
@@ -454,36 +511,37 @@ goto mainmenu
 ::
 ::                        MEMÓRIA
 ::
-::
 ::   ...................................................
-        
+
 :opt_memory
 cls
 echo YGG está ajustando as configurações da memória da sua máquina...
-if /i "%MODE%"=="EXTREME" ( 
+if /i "%MODE%"=="EXTREME" (
         reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v PagingFiles /t REG_MULTI_SZ /d "C:\pagefile.sys 1024 4096" /f >nul 2>&1
-) else ( 
+) else (
         reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v PagingFiles /f >nul 2>&1 ) 
 echo YGG otimizou a memória com sucesso.
 pause >nul
 goto mainmenu
 
 ::   ===================================================
-        
+      
 ::   ===================================================
 ::
 ::                      CHECKPOINT
 ::
 ::   ...................................................
-        
+
 :revertmenu
 cls
 echo Checkpoint do Níðhöggr:
-echo 1) Usar Restauração do Sistema 
-echo 2) Restaurar Backups do Registro 
-echo M) Voltar set /p "RCH=Escolha: "
+echo 1) Usar Restauração do Sistema
+echo 2) Restaurar Backups do Registro
+echo M) Voltar
+
+set /p "RCH=Escolha: "
 if /i "%RCH%"=="1" rstrui.exe
-if /i "%RCH%"=="2" for %%f in ("%BACKUP_DIR%*.reg") do reg import "%%f" >nul 2>&1
+if /i "%RCH%"=="2" for %%f in ("%BACKUP_DIR%\*.reg") do reg import "%%f" >nul 2>&1
 goto mainmenu
 
 ::   ===================================================
@@ -500,4 +558,3 @@ echo Saindo do Níðhöggr V2...
 echo Algumas alterações exigem reinicialização.
 endlocal
 exit /b 0
-
