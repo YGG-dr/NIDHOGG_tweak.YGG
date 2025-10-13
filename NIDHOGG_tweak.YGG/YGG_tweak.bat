@@ -21,7 +21,7 @@ color 0d
 set "YGG_DIR=C:\ygg"
 set "LOG_FILE=%YGG_DIR%\ygg_log.txt"
 set "BACKUP_DIR=%YGG_DIR%\backup"
-set "MODE=EXTREME" :: Com toda certeza o padrão deve ser o modo safe, uhum.
+set "MODE=SAFE" :: Com toda certeza o padrão deve ser o modo safe, uhum.
 
 if not exist "%YGG_DIR%"    mkdir "%YGG_DIR%"    2>nul
 if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%" 2>nul
@@ -50,7 +50,8 @@ goto :eof
 net session >nul 2>&1 
 if %errorlevel% neq 0 ( 
     echo [!] YGG precisa das permissões de administrdor para operar.
-    call :log "YGG não pode se elevar a nível de administrador"
+    call :popup "YGG precisa de permissões de administrador para ser executado!"
+    call :log "Não pode se elevar a nível de administrador"
     powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -ArgumentList '%*' -Verb RunAs" >nul 2>&1 
     exit /b
 )
@@ -255,6 +256,7 @@ echo ===================================================
 ::                 CRIAR CHECKPOINT
 ::        
 ::   ...................................................
+
 :create_restore
 cls
 echo YGG está criando um checkpoint... 
@@ -262,6 +264,7 @@ Powershell -NoProfile -Command "Get-ComputerRestorePoint" >nul 2>&1
 if %errorlevel% neq 0 (
         echo [!] Verifique se a proteção do sistema está habilitado na unidade C: antes.
         call :log "YGG não conseguiu criar o checkpoint: Get-ComputerRestorePoint returned %errorlevel%"
+        call :popup "YGG não conseguiu criar o checkpoint!"
 else (
         powershell -NoProfile -Command "Checkpoint-Computer -description 'YGG checkpoint' -RestorePointType 'MODIFY_SETTINGS'" >nul 2>&1
         if %errorlevel% equ 0 (
@@ -298,6 +301,7 @@ if exist "%temp%\Níðhöggr.zip" (
 ) else (
         echo YGG falhou em baixar os pacotinhos para %YGG_DIR%.
         call :log "Falha ao baixar os arquivos"
+        call :popup "YGG falhou em baixar os pacotinhos!"
 )
 
 pause >nul
