@@ -87,40 +87,6 @@ if %errorlevel% equ 0 (
 ) else (
     call :log "Falha ao criar o backup para %REG_KEYS%Y."
 )
-
-goto :eof
-    
-:: =========================
-:: Função de backup de registro
-:: =========================
-:setBackup
-:: %1 = chave do registro
-:: %2 = tag/nome curto
-set "REG_KEY=%~1"
-set "TAG=%~2"
-
-if "%REG_KEY%"=="" goto :eof
-if "%TAG%"=="" goto :eof
-
-:: --- Gerar timestamp seguro para filenames ---
-for /f "tokens=2-4 delims=/ " %%a in ("%date%") do set "d=%%c-%%b-%%a"
-for /f "tokens=1-3 delims=:." %%a in ("%time%") do set "t=%%a-%%b-%%c"
-set "TS=%d%_%t%"
-
-:: --- Arquivo de backup ---
-set "SAFEFILE=%BACKUP_DIR%\%TAG%_%TS%.reg"
-
-:: --- Exportar registro ---
-reg export "%REG_KEY%" "%SAFEFILE%" /y >nul 2>&1
-
-:: --- Log ---
-if %errorlevel% equ 0 (
-    call :log "Backed up %REG_KEY% to %SAFEFILE%"
-) else (
-    call :log "Failed to backup %REG_KEY% (may not exist or access denied)"
-)
-
-goto :eof
     
 ::   ===================================================
     
@@ -136,7 +102,8 @@ set "PS_CMD=%~1"
 if  "%PS_CMD%"=="" goto :eof
 call :log "YGG está inicializando o PowerShell: %PS_CMD%"
 Powershell -NoProfile -ExecutionPolicy Bypass -Command "%PS_CMD%" >nul 2>&1 
-if %errorlevel% neq 0 call :log "YGG não conseguiu inicializar o PowerShell: %PS_CMD%"
+if %errorlevel% neq 0 
+call :log "YGG não conseguiu inicializar o PowerShell: %PS_CMD%"
 goto :eof
 
 ::   ===================================================
@@ -149,7 +116,7 @@ goto :eof
 
 if /i "%1"=="extreme" set "MODE=EXTREME" 
 if /i "%1"=="safe"    set "MODE=SAFE"
-call :log "YGG está inicializando o Níðhöggr v2 com o modo %MODE%"
+call :log "Inicializando o Níðhöggr v2 com o modo %MODE%"
 
 ::   ===================================================
     
@@ -174,27 +141,42 @@ for /L %%i in (1,1,%SECS%) do (
 ::                         POPUP
 ::
 ::   ...................................................
-    
+
+@echo off
+setlocal
+
+call :popup "Bom dia! Deseja continuar?" "Mensagem do Sistema"
+goto fim
+
 :popup
 :: %1 = mensagem; %2 = título (opcional)
 set "MB_MSG=%~1"
 set "MB_TITLE=%~2"
 if "%MB_TITLE%"=="" set "MB_TITLE=YGG"
 
-:: Executa PowerShell que mostra MessageBox e usa exit code:
-powershell -NoProfile -Command ^
-  "[Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; " ^
-  "$r = [System.Windows.Forms.MessageBox]::Show('%MB_MSG%','%MB_TITLE%',[System.Windows.Forms.MessageBoxButtons]::YepNão,[System.Windows.Forms.MessageBoxIcon]::Question); " ^
-  "if ($r -eq [System.Windows.Forms.DialogResult]::Yep) { exit 0 } else { exit 1 }"
+:: PowerShell sem problemas com aspas
+powershell -NoProfile -Command "[void][Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms'); $r = [System.Windows.Forms.MessageBox]::Show('%MB_MSG%','%MB_TITLE%',[System.Windows.Forms.MessageBoxButtons]::YesNo,[System.Windows.Forms.MessageBoxIcon]::Warning); if ($r -eq [System.Windows.Forms.DialogResult]::Yes) { exit 0 } else { exit 1 }"
 
-:: Resultado em %ERRORLEVEL% (0 = Yes, 1 = No)
+:: Resultado do popup
 if %ERRORLEVEL%==0 (
-    rem Você escolhsu sim
+    echo Yae...
     goto popup_yes
 ) else (
-    rem Você escolheu não
+    echo Awn...
     goto popup_no
 )
+
+:popup_yes
+goto fim
+
+:popup_no
+goto fim
+
+:fim
+pause
+endlocal
+exit /b
+
 
 ::   ===================================================
 ::
@@ -324,7 +306,7 @@ reg add "HKCU\Control Panel\Desktop\WindowMetrics" /v "MinAnimate" /t REG_SZ /d 
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v "VisualFXSetting" /t REG_DWORD /d 2 /f >nul 2>&1
 
 if /i "%MODE%"=="EXTREME" ( 
-        call :log "EXTREME: mostrando WSearch."
+        call :log "[ !- EXTREME MODE -! ] Mostrando WSearch."
         sc config "WSearch" start= disabled >nul 2>&1 
         sc stop "WSearch" >nul 2>&1 
 )
@@ -457,7 +439,7 @@ goto mainmenu
 :opt_debloat
 cls
 echo YGG fará a remoção de aplicativos desnecessários:
-echo 1) Remoção segura.         [ °- SAFE MODE -° ]
+echo 1) Remoção segura.         [  °- SAFE MODE -°  ]
 echo 2) Remoção completa.       [ !- EXTREME MODE -! ]
 echo M) Voltar.                 
 echo.
