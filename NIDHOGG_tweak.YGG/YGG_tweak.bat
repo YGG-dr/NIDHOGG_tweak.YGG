@@ -1,5 +1,6 @@
 @echo off
 @REM
+
 :: YGG sabe que echo off remove os REM, mas o YGG é fresco... UwU
 
 REM ::==================================================::
@@ -74,7 +75,7 @@ if "%REG_KEY%"=="" goto :eof
 if "%TAG%"=="" goto :eof
 
 :: Gera timestamp seguro para o filename.
-for /f "tokens=1-4 delims=/.- " %%a in ("%date%") do set "DATA=%%d-%%b-%%c"
+for /f "tokens=2-4 delims=/ " %%a in ("date /t") do set "DATA=%%c-%%a-%%b"
 for /f "tokens=1-3 delims=:." %%a in ("%time%") do set "HORA=%%a-%%b-%%c"
 set "TS=%DATA%_%HORA%"
 
@@ -85,7 +86,7 @@ reg export "%REG_KEY%" "%SAFEFILE%" /y >nul 2>&1
 if %errorlevel% equ 0 (
     call :log "Backup feito com sucesso para %REG_KEY% e %SAFEFILE%."
 ) else (
-    call :log "Falha ao criar o backup para %REG_KEYS%Y."
+    call :log "Falha ao criar o backup para %REG_KEY%."
 )
     
 ::   ===================================================
@@ -102,8 +103,9 @@ set "PS_CMD=%~1"
 if  "%PS_CMD%"=="" goto :eof
 call :log "YGG está inicializando o PowerShell: %PS_CMD%"
 Powershell -NoProfile -ExecutionPolicy Bypass -Command "%PS_CMD%" >nul 2>&1 
-if %errorlevel% neq 0 
-call :log "YGG não conseguiu inicializar o PowerShell: %PS_CMD%"
+if %errorlevel% neq 0 (
+        call :log "YGG não conseguiu inicializar o PowerShell: %PS_CMD%"
+)
 goto :eof
 
 ::   ===================================================
@@ -135,48 +137,6 @@ for /L %%i in (1,1,%SECS%) do (
     <nul set /p ="." 
     ping -n 2 127.0.0.1 >nul
 )
-
-::   ===================================================
-::
-::                         POPUP
-::
-::   ...................................................
-
-@echo off
-setlocal
-
-call :popup "Bom dia! Deseja continuar?" "Mensagem do Sistema"
-goto fim
-
-:popup
-:: %1 = mensagem; %2 = título (opcional)
-set "MB_MSG=%~1"
-set "MB_TITLE=%~2"
-if "%MB_TITLE%"=="" set "MB_TITLE=YGG"
-
-:: PowerShell sem problemas com aspas
-powershell -NoProfile -Command "[void][Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms'); $r = [System.Windows.Forms.MessageBox]::Show('%MB_MSG%','%MB_TITLE%',[System.Windows.Forms.MessageBoxButtons]::YesNo,[System.Windows.Forms.MessageBoxIcon]::Warning); if ($r -eq [System.Windows.Forms.DialogResult]::Yes) { exit 0 } else { exit 1 }"
-
-:: Resultado do popup
-if %ERRORLEVEL%==0 (
-    echo Yae...
-    goto popup_yes
-) else (
-    echo Awn...
-    goto popup_no
-)
-
-:popup_yes
-goto fim
-
-:popup_no
-goto fim
-
-:fim
-pause
-endlocal
-exit /b
-
 
 ::   ===================================================
 ::
@@ -273,7 +233,7 @@ cls
 
 echo YGG está baixando alguns pacotinhos para o %YGG_DIR%...
 call :progress "YGG está carregando os pacotinhos." 3
-set "RESOURCE_URL=https://github.com/YGG-dr/NIDHOGG_tweak.YGG/blob/main/NIDHOGG_tweak.YGG/N%C3%AD%C3%B0h%C3%B6ggr.zip"
+set "RESOURCE_URL="
 if exist "%temp%\Níðhöggr.zip" del "%temp%\Níðhöggr.zip" >nul 2>&1
 curl -g -k -l -# -o "%temp%\Níðhöggr.zip" "%RESOURCE_URL%" >nul 2>&1
 if exist "%temp%\Níðhöggr.zip" (
@@ -431,6 +391,8 @@ pause >nul
 goto mainmenu
 
 ::   ===================================================
+
+::   ===================================================
 ::
 ::                   REMOÇÃO DE BLOATWARE        
 ::
@@ -494,6 +456,8 @@ pause >nul
 goto mainmenu
 
 ::   ===================================================
+
+::   ===================================================
 ::
 ::                        MEMÓRIA
 ::
@@ -533,6 +497,37 @@ goto mainmenu
 ::   ===================================================
 
 ::   ===================================================
+::
+::                         POPUP
+::
+::   ...................................................
+
+:popup
+set "MB_MSG=%~1"
+set "MB_TITLE=%~2"
+
+if "%MB_TITLE%"=="" set "MB_TITLE=YGG"
+
+powershell -NoProfile -Command ^
+ "[void][Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms');" ^
+ "$r = [System.Windows.Forms.MessageBox]::Show('%MB_MSG%','%MB_TITLE%'," ^
+ "[System.Windows.Forms.MessageBoxButtons]::YesNo," ^
+ "[System.Windows.Forms.MessageBoxIcon]::Warning);" ^
+ "if ($r -eq [System.Windows.Forms.DialogResult]::Yes) { exit 0 } else { exit 1 }"
+
+if %ERRORLEVEL%==0 (
+    echo Yae...
+    goto popup_yes
+) else (
+    echo Awn...
+    goto popup_no
+)
+
+exit /b
+
+::   ===================================================
+
+::   ===================================================
 ::        
 ::                        SAÍDA
 ::
@@ -544,3 +539,5 @@ echo Saindo do Níðhöggr V2...
 echo Algumas alterações exigem reinicialização.
 endlocal
 exit /b 0
+
+::   ===================================================

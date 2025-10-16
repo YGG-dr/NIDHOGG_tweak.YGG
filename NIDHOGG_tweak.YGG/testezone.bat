@@ -2,10 +2,6 @@
 setlocal
 
 :: Chamada inicial do popup
-call :popup "Bom dia" "Olá"
-
-pause
-exit /b
 
 :popup
 :: %1 = mensagem; %2 = título (opcional)
@@ -32,11 +28,3 @@ if %ERRORLEVEL%==0 (
 
 :: nunca deveria chegar aqui
 exit /b
-
-:popup_yes
-echo Você clicou YES
-goto :eof
-
-:popup_no
-echo Você clicou NO
-goto :eof
