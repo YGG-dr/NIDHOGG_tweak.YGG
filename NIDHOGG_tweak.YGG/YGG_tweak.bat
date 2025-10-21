@@ -47,7 +47,7 @@ goto :eof
 ::              VERIFICAÇÃO DE ADMINISTRADOR 
 ::
 ::   ...................................................
-
+:check_admin
 net session >nul 2>&1 
 if %errorlevel% neq 0 ( 
     echo [!] YGG precisa das permissões de administrdor para operar.
@@ -56,9 +56,9 @@ if %errorlevel% neq 0 (
     powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -ArgumentList '%*' -Verb RunAs" >nul 2>&1 
     exit /b
 )
-
 call :log "YGG conseguiu se elevar a nível de administrador com sucesso"
-    
+goto :eof
+
 ::   ===================================================
 
 ::   ===================================================
@@ -88,7 +88,7 @@ if %errorlevel% equ 0 (
 ) else (
     call :log "Falha ao criar o backup para %REG_KEY%."
 )
-    
+goto :eof
 ::   ===================================================
     
 ::   ===================================================
@@ -137,6 +137,7 @@ for /L %%i in (1,1,%SECS%) do (
     <nul set /p ="." 
     ping -n 2 127.0.0.1 >nul
 )
+goto :eof
 
 ::   ===================================================
 ::
@@ -377,8 +378,8 @@ cls
 echo YGG está limpando os arquivos temporários do armazenamento...
 call :log "A limpeza do armazenamento foi iniciado."
 
-rd /s /q "%temp%" >nul 2>&1 || del /s /q "%temp%*" >nul 2>&1
-rd /s /q "C:\Windows\Temp" >nul 2>&1 || del /s /q "C:\Windows\Temp*" >nul 2>&1
+del /f /s /q "%temp%\*" >nul 2>&1
+del /d /s /q "c:\Windows\Temp\*" >nul 2>&1
 
 if /i "%MODE%"=="EXTREME" (
         call :log "[ !- EXTREME MODE -! ] Iniciando limpeza do DISM."
@@ -413,7 +414,7 @@ if /i "%DCH%"=="1" (
         call :log "Remoção de debloats seguros."
         call :psrun "Get-AppxPackage -AllUsers *3D* | Remove-AppxPackage"
         call :psrun "Get-AppxPackage -AllUsers *Microsoft.XboxGamingOverlay* | Remove-AppxPackage"
-        echo :log "A remoção de debloats no modo seguro foi concluido."
+        call :log "A remoção de debloats no modo seguro foi concluido."
 ) else if /i "%DCH%"=="2" (
         echo [!] YGG está fazendo backup antes de remover os apps.
         call :psrun "Get-AppxPackage -AllUsers | Export-CliXml -Path '%YGG_DIR%\allusers_appx.xml'"
@@ -445,7 +446,7 @@ call :setBackup "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "tcpip
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v MaxUserPort /t REG_DWORD /d 65534 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v TcpTimedWaitDelay /t REG_DWORD /d 30 /f >nul 2>&1
 
-if /i %MODE%=="EXTREME" (
+if /i "%MODE%"=="EXTREME" (
         echo [ !- EXTREME MODE -! ] YGG pode acabar desativando o IPV6 da sua máquina, isso pode ser perigoso.
         :: reg add "HKLM\SYSTEM\CurrentControlSet\Services\TCPIP6\Parameters" /v DisabledComponents /t REG_DWORD /d 0xffffffff /f >nul 2>&1
 )
