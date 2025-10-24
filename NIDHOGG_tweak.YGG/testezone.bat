@@ -1,30 +1,10 @@
 @echo off
-setlocal
+setlocal EnableDelayedExpansion
 
-:: Chamada inicial do popup
-
-:popup
-:: %1 = mensagem; %2 = título (opcional)
-set "MB_MSG=%~1"
-set "MB_TITLE=%~2"
-
-if "%MB_TITLE%"=="" set "MB_TITLE=YGG"
-
-:: PowerShell para exibir popup com botões Yes/No
-powershell -NoProfile -Command ^
- "[void][Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms');" ^
- "$r = [System.Windows.Forms.MessageBox]::Show('%MB_MSG%','%MB_TITLE%'," ^
- "[System.Windows.Forms.MessageBoxButtons]::YesNo," ^
- "[System.Windows.Forms.MessageBoxIcon]::Warning);" ^
- "if ($r -eq [System.Windows.Forms.DialogResult]::Yes) { exit 0 } else { exit 1 }"
-
-if %ERRORLEVEL%==0 (
-    echo Yae...
-    goto popup_yes
-) else (
-    echo Awn...
-    goto popup_no
+for /f "skip=1" %%t in ('wmic /namespace:\\root\wmi PATH MSAcpi_ThermalZoneTemperature get CurrentTemperature') do (
+    if not "%%t"=="" (
+        set /a tempC=((%%t/10)-273)
+        echo Temperatura CPU: !tempC! °C
+    )
 )
-
-:: nunca deveria chegar aqui
-exit /b
+pause
