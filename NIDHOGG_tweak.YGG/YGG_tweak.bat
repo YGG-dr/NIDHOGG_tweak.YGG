@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
-title Níðhöggr v2.1 — Made by YGG
+title Níðhöggr
 color 0d
 
 REM ::==================================================::
@@ -22,7 +22,7 @@ set "MODE=SAFE"
 
 :: Criar diretórios se não existirem
 if not exist "%YGG_DIR%" mkdir "%YGG_DIR%" 2>nul || (
-    echo [ERRO] Falha ao criar diretório %YGG_DIR%.
+    echo [ERRO] YGG falhou ao criar o diretório %YGG_DIR% ;-;.
     pause
     exit /b
 )
@@ -45,12 +45,14 @@ goto :eof
 :check_admin
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [!] YGG precisa de permissões de administrador.
+    echo [!] YGG precisa de permissões de administrador para operar...
     call :popup "YGG precisa de permissões de administrador!" "YGG"
     call :log "Falha ao elevar privilégios."
     powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -Verb RunAs" >nul 2>&1
     exit /b
 )
+
+echo Obrigado pelas permissões de administrador, ^-^.
 call :log "Permissões de administrador confirmadas."
 goto :eof
 
@@ -65,11 +67,11 @@ set "REG_KEY=%~1"
 set "TAG=%~2"
 
 if "%REG_KEY%"=="" (
-    echo [ERRO] Nenhuma chave especificada.
+    echo [ERRO] YGG não tem nenhuma chave especificada...
     exit /b 1
 )
 if "%TAG%"=="" (
-    echo [ERRO] Nenhuma tag especificada.
+    echo [ERRO] YGG não tem nenhuma tag especificada...
     exit /b 1
 )
 
@@ -88,7 +90,7 @@ reg export "%REG_KEY%" "%SAFEFILE%" /y >nul 2>&1
 :: Resultado
 if %errorlevel% equ 0 (
     call :echo_color 0a "[OK] Backup criado: %SAFEFILE%"
-    call :log "Backup criado: %REG_KEY% → %SAFEFILE%"
+    call :log "Backup criado: %REG_KEY% -> %SAFEFILE%"
 ) else (
     call :echo_color 0c "[ERRO] Falha ao criar backup de %REG_KEY%"
     call :log "Falha no backup: %REG_KEY%"
