@@ -1,18 +1,20 @@
 @echo off
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
-title N√≠√∞h√∂ggr
+title NÌhˆggr
 color 0d
-
-REM ::==================================================::
-REM ::                                                  ::
-REM ::         --- N√≠√∞h√∂ggr v2.1 ‚Ä¢ Made by YGG ---      ::
-REM ::                                                  ::
-REM ::==================================================::
+mode con cols=80 lines=25
 
 ::   ===================================================
-::""
-::                   CONFIGURA√á√ïES GLOBAIS
+::
+::                     NÕ–H÷GGR v2.1
+::                      Made by YGG
+::
+::   ===================================================
+
+::   ===================================================
+::
+::                   CONFIGURA«’ES GLOBAIS
 ::
 ::   ...................................................
 set "YGG_DIR=C:\ygg"
@@ -20,45 +22,49 @@ set "LOG_FILE=%YGG_DIR%\ygg_log.txt"
 set "BACKUP_DIR=%YGG_DIR%\backup"
 set "MODE=SAFE"
 
-:: Criar diret√≥rios se n√£o existirem
+:: Criar diretÛrios se n„o existirem
 if not exist "%YGG_DIR%" mkdir "%YGG_DIR%" 2>nul || (
-    echo [ERRO] YGG falhou ao criar o diret√≥rio %YGG_DIR% ;-;.
+    echo [ERRO] YGG falhou ao criar o diretÛrio %YGG_DIR% ;-;.
     pause
     exit /b
 )
 if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%" 2>nul
 
 ::   ===================================================
+
+::   ===================================================
 ::
-::                     FUN√á√ÉO DE LOG
+::                      FUN«√O DE LOG
 ::
 ::   ...................................................
 :log
 echo [%date% %time%] %* >> "%LOG_FILE%"
 goto :eof
 
+
 ::   ===================================================
 ::
-::              FUN√á√ÉO DE CHECAGEM DE ADMIN
+::               FUN«√O DE CHECAGEM DE ADMIN
 ::
 ::   ...................................................
 :check_admin
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [!] YGG precisa de permiss√µes de administrador para operar...
-    call :popup "YGG precisa de permiss√µes de administrador!" "YGG"
-    call :log "Falha ao elevar privil√©gios."
+    echo [!] YGG precisa de permissıes de administrador para operar...
+    call :popup "YGG precisa de permissıes de administrador!" "YGG"
+    call :log "Falha ao elevar privilÈgios."
     powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -Verb RunAs" >nul 2>&1
     exit /b
 )
 
-echo Obrigado pelas permiss√µes de administrador, ^-^.
-call :log "Permiss√µes de administrador confirmadas."
+echo Obrigado pelas permissıes de administrador, ^-^.
+call :log "Permissıes de administrador confirmadas."
 goto :eof
+
 
 ::   ===================================================
 ::
-::                  FUN√á√ÉO DE BACKUP DE REGISTRO
+::                FUN«√O DE BACKUP DE REGISTRO
 ::
 ::   ...................................................
 :setBackup
@@ -67,18 +73,18 @@ set "REG_KEY=%~1"
 set "TAG=%~2"
 
 if "%REG_KEY%"=="" (
-    echo [ERRO] YGG n√£o tem nenhuma chave especificada...
+    echo [ERRO] YGG n„o tem nenhuma chave especificada...
     exit /b 1
 )
 if "%TAG%"=="" (
-    echo [ERRO] YGG n√£o tem nenhuma tag especificada...
+    echo [ERRO] YGG n„o tem nenhuma tag especificada...
     exit /b 1
 )
 
 :: Timestamp seguro
 for /f "delims=" %%T in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HH-mm-ss"') do set "TS=%%T"
 
-:: Garante diret√≥rio
+:: Garante diretÛrio
 if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
 
 :: Caminho final do backup
@@ -98,18 +104,39 @@ if %errorlevel% equ 0 (
 endlocal
 goto :eof
 
+
 ::   ===================================================
 ::
-::              FUN√á√ÉO PARA EXECUTAR POWERSHELL
+::              FUN«√O PARA EXECUTAR POWERSHELL
 ::
 ::   ...................................................
 :psrun
-set "PS_CMD=%~1"
-if "%PS_CMD%"=="" goto :eof
-call :log "Executando PowerShell: %PS_CMD%"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "%PS_CMD%" >nul 2>&1
-if %errorlevel% neq 0 call :log "Falha no PowerShell: %PS_CMD%"
+setlocal EnableDelayedExpansion
+
+set "PS_CMD=%*"
+if "%PS_CMD%"=="" endlocal & goto :eof
+
+set "TMP_PS=%TEMP%\ygg_psrun_%RANDOM%.ps1"
+
+( 
+    echo !PS_CMD!
+) > "%TMP_PS%"
+
+call :log "Executando o PowerShell: %TMP_PS% => %PS_CMD%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TMP_PS%" >nul 2>&1
+set "RC=%errorlevel%"
+
+del "%TMP_PS%" >nul 2>&1
+
+if %RC% neq 0 (
+    call :log "Falha no PowerShell: %PS_CMD% (CÛdigo %RC%)"
+)
+
+endlocal
 goto :eof
+
+
 
 ::   ===================================================
 ::
@@ -127,6 +154,7 @@ for /L %%i in (1,1,%SECS%) do (
 echo.
 goto :eof
 
+
 ::   ===================================================
 ::
 ::                           POPUP
@@ -138,16 +166,17 @@ set "MB_TITLE=%~2"
 if "%MB_TITLE%"=="" set "MB_TITLE=YGG"
 
 :: Escapa aspas internas
-set "MB_MSG=%MB_MSG:"=`"%"
+set "MB_MSG=%MB_MSG:"=`"%" 
 
 powershell -NoProfile -Command ^
 "[void][Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms'); ^
 $r = [System.Windows.Forms.MessageBox]::Show('%MB_MSG%','%MB_TITLE%',[System.Windows.Forms.MessageBoxButtons]::OK,[System.Windows.Forms.MessageBoxIcon]::Information);"
 goto :eof
 
+
 ::   ===================================================
 ::
-::                     FUN√á√ÉO DE ECHO COLORIDO
+::                     FUN«√O DE ECHO COLORIDO
 ::
 ::   ...................................................
 :echo_color
@@ -159,6 +188,7 @@ echo %MSG%
 color 0d
 goto :eof
 
+
 ::   ===================================================
 ::
 ::                     CREATE CHECKPOINT
@@ -166,74 +196,82 @@ goto :eof
 ::   ...................................................
 :create_restore
 cls
-echo YGG est√° criando um checkpoint...
+echo YGG est· criando um checkpoint...
 powershell -NoProfile -Command "Checkpoint-Computer -Description 'YGG checkpoint' -RestorePointType 'MODIFY_SETTINGS'" >nul 2>&1
 if %errorlevel% equ 0 (
     call :echo_color 0a "[OK] Checkpoint criado com sucesso."
     call :log "Checkpoint criado com sucesso."
 ) else (
-    call :echo_color 0c "[ERRO] Falha ao criar checkpoint. Verifique prote√ß√£o do sistema."
+    call :echo_color 0c "[ERRO] Falha ao criar checkpoint. Verifique proteÁ„o do sistema."
     call :log "Falha ao criar checkpoint."
 )
 pause >nul
 goto mainmenu
 
+
 ::   ===================================================
 ::
-::                          MENU PRINCIPAL
+::                        MENU PRINCIPAL
 ::
 ::   ...................................................
 :mainmenu
 cls
 echo ===================================================
 echo.
-echo           N√≠√∞h√∂ggr v2.1 ‚Äî Menu (Modo: %MODE%)
+echo             __  __ _____ _   _ _   _ 
+echo            |  \/  | ____| \ | | | | |
+echo            | |\/| |  _| |  \| | | | |
+echo            | |  | | |___| |\  | |_| |
+echo            |_|  |_|_____|_| \_|\____/
 echo.
 echo ..................................................
 echo.
-echo 01. Otimiza√ß√µes gerais do sistema.
-echo 02. Otimiza√ß√µes de energia.
-echo 03. Ajustes de mouse e teclado.
-echo 04. Otimiza√ß√µes da GPU.
-echo 05. Otimiza√ß√µes da CPU.
-echo 06. Limpeza e armazenamento.
-echo 07. Remo√ß√£o de bloatwares.
-echo 08. Otimiza√ß√£o da rede.
-echo 09. Otimiza√ß√£o da mem√≥ria.
-echo 10. Criar checkpoint.
-echo 11. Baixar e atualizar recursos.
+echo [01] OtimizaÁıes gerais do sistema
+echo [02] OtimizaÁıes de energia
+echo [03] Ajustes de mouse e teclado
+echo [04] OtimizaÁıes da GPU
+echo [05] OtimizaÁıes da CPU
+echo [06] Limpeza e armazenamento
+echo [07] RemoÁ„o de bloatwares
+echo [08] OtimizaÁ„o da rede
+echo [09] OtimizaÁ„o da memÛria
+echo.
+echo [10] Criar checkpoint
+echo [11] Baixar e atualizar recursos
 echo.
 echo R. Restaurar
 echo X. Sair
 echo.
-set /p "CHOICE=O que voc√™ quer que YGG fa√ßa?: "
+set /p "CHOICE=> "
 echo ===================================================
 
 if /i "%CHOICE%"=="10" goto create_restore
 if /i "%CHOICE%"=="X"  goto :exit
 if /i "%CHOICE%"=="R"  goto restore
 
-echo [!] YGG n√£o entendeu seu pedido.
+echo [! ERROR !] YGG n„o entendeu seu pedido.
 pause >nul
 goto mainmenu
 
+
 ::   ===================================================
 ::
-::                         SA√çDA
+::                            SAÕDA
 ::
 ::   ...................................................
 :exit
 cls
-echo Saindo do N√≠√∞h√∂ggr V2.1...
-echo Algumas altera√ß√µes podem exigir reinicializa√ß√£o.
-call :log "N√≠√∞h√∂ggr encerrado."
+echo Saindo do NÌhˆggr V2.1...
+echo Algumas alteraÁıes podem exigir reinicializaÁ„o.
+call :log "NÌhˆggr encerrado."
 endlocal
 exit /b 0
 
+
 ::   ===================================================
 ::
-::                    PONTO DE ENTRADA
+::                        PONTO DE ENTRADA
 ::
 ::   ...................................................
 call :check_admin
-goto mainmenu
+call :mainmenu
