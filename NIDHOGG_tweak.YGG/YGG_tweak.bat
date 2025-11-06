@@ -50,18 +50,31 @@ goto :eof
 ::   ...................................................
 :check_admin
 net session >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [!] YGG precisa de permissões de administrador para operar...
-    call :popup "YGG precisa de permissões de administrador!" "YGG"
-    call :log "Falha ao elevar privilégios."
-    powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -Verb RunAs" >nul 2>&1
-    exit /b
+if (
+    echo Obrigado pelas permissões de administrador, ^-^.
+    call :log "Permissões de administrador confirmadas."
+    goto :eof
 )
 
-echo Obrigado pelas permissões de administrador, ^-^.
-call :log "Permissões de administrador confirmadas."
-goto :eof
+echo [!] YGG precisa ser elevado a administrador para operar... ;-;
+call :popup "por favor, você poderia me elevar a administrador da sua máquina?" "Promoção"
 
+powershell -NoProfile -Command "start-process -FilePath '%~f0' -verb RunAs" >nul 2&>&1
+set "PSRC=%errorlevel%"
+
+if %PSRC% neq 0 (
+    call :echo_color 0c "[⚠. ERRO .⚠] Não foi possível iniciar a elevação a adimnistrador (Start-process retornou %PSRC%)."
+    call :log "Start-Process falhou (código %PSRC%). Continuar em admin?"
+    echo Deseja continuar sem privilégios de adimnistrador? [S/N]
+    set /p "ANS=> "
+    if /i "%ANS%"=="S" (
+        call :log "usuário optou por continuar sem admin (Start-Process falhou)"
+        goto :eof
+    ) else (
+        call :log "Usuário optou por encerrar após a falha na elevação."
+        exit /b 1
+    )
+)
 
 ::   ===================================================
 ::
@@ -274,7 +287,7 @@ exit /b 0
 ::                        PONTO DE ENTRADA
 ::
 ::   ...................................................
-call :check_admin
 call :mainmenu
+call :check_admin
 
 pause
