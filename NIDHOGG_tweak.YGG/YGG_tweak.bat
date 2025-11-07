@@ -25,7 +25,7 @@ set "MODE=SAFE"
 
 :: Criar diretórios se não existirem
 if not exist "%YGG_DIR%" mkdir "%YGG_DIR%" 2>nul || (
-    echo [ERRO] YGG falhou ao criar o diretório %YGG_DIR% ;-;.
+    echo [⚠. ERRO .⚠] YGG falhou ao criar o diretório %YGG_DIR% ;-;.
     pause
     exit /b
 )
@@ -50,7 +50,7 @@ goto :eof
 ::   ...................................................
 :check_admin
 net session >nul 2>&1
-if (
+if %errorlevel% equ 0 (
     echo Obrigado pelas permissões de administrador, ^-^.
     call :log "Permissões de administrador confirmadas."
     goto :eof
@@ -59,7 +59,7 @@ if (
 echo [!] YGG precisa ser elevado a administrador para operar... ;-;
 call :popup "por favor, você poderia me elevar a administrador da sua máquina?" "Promoção"
 
-powershell -NoProfile -Command "start-process -FilePath '%~f0' -verb RunAs" >nul 2&>&1
+powershell -NoProfile -Command "start-process -FilePath '%~f0' -verb RunAs" >nul 2>&1
 set "PSRC=%errorlevel%"
 
 if %PSRC% neq 0 (
@@ -76,6 +76,27 @@ if %PSRC% neq 0 (
     )
 )
 
+timeout / t 2 >nul
+
+net session >nul 2>&1
+if %errorlevel% equ 0 (
+    call :log "A elevação foi bem-sucedida (detectado admin após o Start-Process)."
+    exit /b 
+)
+
+call :echo_color 4 "[⚠. ERRO .⚠] Parece que a elevação foi cancelada ou falhou, por favor tente novamente!"
+call :log "A elevação possívelmente foi cancelada pelo usuário"
+
+echo Deseja continuar sem previlégios de adimnistrador? [S/N]
+set /p "ANS=> "
+if /i "%ANS%"=="s" (
+    call :log "Usuário optou por continuar sem admin após cancelamento de elevação"
+    goto :eof
+) else (
+    call :log "Usuário optou por encerrar após o cancelamento da elevação."
+    exit /b 1
+)
+
 ::   ===================================================
 ::
 ::                FUNÇÃO DE BACKUP DE REGISTRO
@@ -87,11 +108,11 @@ set "REG_KEY=%~1"
 set "TAG=%~2"
 
 if "%REG_KEY%"=="" (
-    echo [ERRO] YGG não tem nenhuma chave especificada...
+    echo [⚠. ERRO .⚠] YGG não tem nenhuma chave especificada...
     exit /b 1
 )
 if "%TAG%"=="" (
-    echo [ERRO] YGG não tem nenhuma tag especificada...
+    echo [⚠. ERRO .⚠] YGG não tem nenhuma tag especificada...
     exit /b 1
 )
 
@@ -112,7 +133,7 @@ if %errorlevel% equ 0 (
     call :echo_color 0a "[OK] Backup criado: %SAFEFILE%"
     call :log "Backup criado: %REG_KEY% -> %SAFEFILE%"
 ) else (
-    call :echo_color 0c "[ERRO] Falha ao criar backup de %REG_KEY%"
+    call :echo_color 0c "[⚠. ERRO .⚠] Falha ao criar backup de %REG_KEY%"
     call :log "Falha no backup: %REG_KEY%"
 )
 endlocal
@@ -180,7 +201,7 @@ set "MB_TITLE=%~2"
 if "%MB_TITLE%"=="" set "MB_TITLE=YGG"
 
 :: Escapa aspas internas
-set "MB_MSG=%MB_MSG:"=`"%" 
+set "MB_MSG=%MB_MSG:"=^"%" 
 
 powershell -NoProfile -Command ^
 "[void][Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms'); ^
@@ -216,7 +237,7 @@ if %errorlevel% equ 0 (
     call :echo_color 0a "[OK] Checkpoint criado com sucesso."
     call :log "Checkpoint criado com sucesso."
 ) else (
-    call :echo_color 0c "[ERRO] Falha ao criar checkpoint. Verifique proteção do sistema."
+    call :echo_color 0c "[⚠. ERRO .⚠] Falha ao criar checkpoint. Verifique proteção do sistema."
     call :log "Falha ao criar checkpoint."
 )
 pause >nul
@@ -287,7 +308,8 @@ exit /b 0
 ::                        PONTO DE ENTRADA
 ::
 ::   ...................................................
-call :mainmenu
 call :check_admin
+call :mainmenu
+
 
 pause
